@@ -1,20 +1,21 @@
-__version__="0.0.1"
+__version__="0.0.2"
+
+from multiprocessing import Pool
 
 from vondel.user import User
-from vondel.parse_page import get_wanted_classes_from_vondelgym_oost
 import logging
+
 
 def run(email: str, password: str) -> None:
   logger = logging.getLogger()
+
   user = User()
 
-  user.login(email=email, password=password)
+  if not user.jwt:
+    user.login(email=email, password=password)
 
-  wanted = get_wanted_classes_from_vondelgym_oost(user.session_id)
-  
-  logger.info("Found following classes:")
+    wanted = user.get_wanted_classes_from_vondelgym_oost()
 
-  for clazz in wanted:
-    logger.info(f"Trying to book: {clazz}")
-    user.book_class_at(clazz.start_time, clazz.day, clazz.month)
-
+  with Pool(4) as p:
+    for response in p.map(user.book_class, wanted):
+      logger.info(f"Response: {response.status_code} {response.text}")
