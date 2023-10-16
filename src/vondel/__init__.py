@@ -19,3 +19,5 @@ def run(email: str, password: str) -> None:
   with Pool(4) as p:
     for response in p.map(user.book_class, wanted):
       logger.info(f"Response: {response.status_code} {response.text}")
+
+
